@@ -1,0 +1,70 @@
+<!-- Tệp: templates/index.html -->
+{% extends 'base.html' %}
+
+{% block title %}Quản lý Channel Telegram{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>Tổng quan Channel</h2>
+        </div>
+        <div class="card-body">
+            <div class="channel-stats">
+                <div class="stat-card">
+                    <i class="fas fa-broadcast-tower"></i>
+                    <h3>{{ channels|length }}</h3>
+                    <p>Tổng số Channel</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-paper-plane"></i>
+                    <h3>{{ channels|sum(attribute='post_count') }}</h3>
+                    <p>Tổng số bài đăng</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>{{ channels|selectattr('posts')|map(attribute='posts')|map('length')|list|max if channels else 0 }}</h3>
+                    <p>Channel có nhiều bài nhất</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Danh sách Channel</h2>
+            <button class="btn btn-sm" onclick="openAddChannelModal()"><i class="fas fa-plus"></i> Thêm Channel</button>
+        </div>
+        <div class="card-body">
+            {% if channels %}
+                <div class="channel-grid">
+                    {% for channel in channels %}
+                        <div class="channel-card">
+                            <div class="channel-header">
+                                <h3>{{ channel.name }}</h3>
+                            </div>
+                            <div class="channel-body">
+                                <div class="channel-info">
+                                    <p><strong>Chat ID:</strong> <span class="id">{{ channel.id }}</span></p>
+                                    <p><strong>Số bài đăng:</strong> {{ channel.post_count }}</p>
+                                    <p><strong>Ngày thêm:</strong> {{ channel.date_added }}</p>
+                                </div>
+                                <div class="channel-actions">
+                                    <a href="{{ url_for('channel_detail', channel_id=channel.id) }}" class="btn btn-sm">
+                                        <i class="fas fa-eye"></i> Chi tiết
+                                    </a>
+                                    <form action="{{ url_for('delete_channel', channel_id=channel.id) }}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa channel này?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Chưa có channel nào. Hãy thêm channel mới!</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

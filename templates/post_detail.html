@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết Bài đăng{% endblock %}
+
+{% block content %}
+<div class="post-detail">
+    <h2>{{ post.caption }}</h2>
+    <p>ID Channel: {{ channel.id }}</p>
+    <p>Ngày đăng: {{ post.date }}</p>
+    <p>Số lượng media: {{ post.media_count }}</p>
+    <p>Nội dung: {{ post.caption }}</p>
+    <div class="media-files">
+        {% for media in post.media_files %}
+            {% if media.type == 'photo' %}
+                <img src="{{ url_for('static', filename='uploads/' ~ media.filename) }}" alt="Photo" class="img-fluid">
+            {% elif media.type == 'video' %}
+                <video controls class="img-fluid">
+                    <source src="{{ url_for('static', filename='uploads/' ~ media.filename) }}" type="video/mp4">
+                    Trình duyệt của bạn không hỗ trợ video.
+                </video>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
