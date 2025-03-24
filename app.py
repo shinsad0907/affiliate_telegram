@@ -153,57 +153,46 @@ def upload(channel_id):
     if not channel:
         flash('Không tìm thấy channel!', 'danger')
         return redirect(url_for('index'))
-    
+
     media_files = request.files.getlist('media')
     caption = request.form.get('caption', '')
-    media_group = []
-
-    # Không có file được chọn
     if not media_files or media_files[0].filename == '':
         flash('Vui lòng chọn file!', 'warning')
         return redirect(url_for('channel_detail', channel_id=channel_id))
 
+    media_group = []
+    files = {}
     media_file_info = []
-    for media in media_files:
-        if media:
-            media_path = os.path.join(app.config['UPLOAD_FOLDER'], media.filename)
-            media.save(media_path)
-            
-            # Xác định loại media
-            media_type = 'photo' if media.filename.lower().endswith(('png', 'jpg', 'jpeg', 'gif')) else 'video'
-            media_group.append({
-                'type': media_type,
-                'media': f'attach://{media.filename}'
-            })
-            media_file_info.append({
-                'type': media_type,
-                'filename': media.filename
-            })
 
-    files = {media.filename: open(os.path.join(app.config['UPLOAD_FOLDER'], media.filename), 'rb') for media in media_files}
-    
+    # Chuẩn bị media để gửi trực tiếp
+    for idx, media in enumerate(media_files):
+        media_type = 'photo' if media.filename.lower().endswith(('png', 'jpg', 'jpeg', 'gif')) else 'video'
+        files[f'media{idx}'] = (media.filename, media.stream, media.mimetype)
+        media_group.append({
+            'type': media_type,
+            'media': f'attach://media{idx}'
+        })
+        media_file_info.append({'type': media_type, 'filename': media.filename})
+
     # Thêm caption vào media đầu tiên
     if caption and media_group:
         media_group[0]['caption'] = caption
 
+    # Gửi media group lên Telegram
     response = requests.post(
         f'https://api.telegram.org/bot{BOT_TOKEN}/sendMediaGroup',
-        data={'chat_id': channel_id, 'media': str(media_group).replace("'", '"')},
+        data={'chat_id': channel_id, 'media': json.dumps(media_group)},
         files=files
     )
 
-    # Đóng tất cả các file đã mở
-    for f in files.values():
-        f.close()
-
     if response.status_code == 200:
-        # Lưu thông tin bài đăng vào dữ liệu channel
         add_post_to_channel(channel_id, media_file_info, caption)
         flash('Đã đăng bài thành công!', 'success')
     else:
         flash(f'Lỗi khi gửi tới Telegram: {response.text}', 'danger')
 
     return redirect(url_for('channel_detail', channel_id=channel_id))
+
 
 @app.route('/delete_channel/<channel_id>', methods=['POST'])
 @login_required
