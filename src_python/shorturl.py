@@ -30,4 +30,4 @@ class SHORTEN:
         }
 
         response = requests.post('https://by.com.vn/shorten', cookies=self.cookies, headers=self.headers, files=files)
-        return response.json()['shorturl']
+        return response.json()['data']['shorturl']
