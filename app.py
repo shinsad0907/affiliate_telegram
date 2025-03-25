@@ -4,7 +4,9 @@ import requests
 import os
 import json
 from datetime import datetime
-
+from src_python.get_data import GET_DATA
+from src_python.update_link import UPDATE_DATA
+from src_python.shorturl import SHORTEN
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
@@ -71,10 +73,16 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def get_data_link():
+    return GET_DATA().get_data_link()
+def shorten_link(link):
+    return SHORTEN().bylink(link)
+
 @app.route('/')
 def index():
     channels = load_channels()
     return render_template('index.html', channels=channels)
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -149,6 +157,7 @@ def post_detail(channel_id, post_id):
 @app.route('/upload/<channel_id>', methods=['POST'])
 @login_required
 def upload(channel_id):
+
     channel = find_channel(channel_id)
     if not channel:
         flash('Không tìm thấy channel!', 'danger')
@@ -156,6 +165,10 @@ def upload(channel_id):
 
     media_files = request.files.getlist('media')
     caption = request.form.get('caption', '')
+    data_link = request.form.get('telegram_link', '')
+    shorten_linked = shorten_link(data_link)
+    link = UPDATE_DATA().update_link(shorten_linked)
+
     if not media_files or media_files[0].filename == '':
         flash('Vui lòng chọn file!', 'warning')
         return redirect(url_for('channel_detail', channel_id=channel_id))
@@ -176,7 +189,8 @@ def upload(channel_id):
 
     # Thêm caption vào media đầu tiên
     if caption and media_group:
-        media_group[0]['caption'] = caption
+        media_group[0]['caption'] = f'{caption}\n\nhttps://affiliate-telegram.vercel.app/{link}'
+
 
     # Gửi media group lên Telegram
     response = requests.post(
@@ -188,6 +202,7 @@ def upload(channel_id):
     if response.status_code == 200:
         add_post_to_channel(channel_id, media_file_info, caption)
         flash('Đã đăng bài thành công!', 'success')
+
     else:
         flash(f'Lỗi khi gửi tới Telegram: {response.text}', 'danger')
 
@@ -215,7 +230,19 @@ def delete_post(channel_id, post_id):
             flash('Đã xóa bài đăng thành công!', 'success')
             break
     return redirect(url_for('channel_detail', channel_id=channel_id))
+# ...existing code...
 
+@app.route('/<id>')
+def data_link(id):
+    data = get_data_link()
+    link_data = next((item for item in data if item['id'] == id), None)
+    if link_data:
+        return render_template('link.html', link_data=link_data)
+    else:
+        flash('Không tìm thấy link!', 'danger')
+        return redirect(url_for('index'))
+
+# ...existing code...
 if __name__ == '__main__':
     # Tạo file channels.json nếu chưa tồn tại
     if not os.path.exists(CHANNELS_FILE):
