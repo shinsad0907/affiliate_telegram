@@ -25,5 +25,5 @@ class SHORTEN:
             'deepLink': True,
         }
 
-        response = requests.post('https://api.smartlink.mk/tools/shortener', headers=self.headers, json=json_data)
-        return response['data']['shorturl']
+        response = requests.post('https://api.smartlink.mk/tools/shortener', headers=self.headers, json=json_data).json()
+        return response['url']
