@@ -166,8 +166,8 @@ def upload(channel_id):
     media_files = request.files.getlist('media')
     caption = request.form.get('caption', '')
     data_link = request.form.get('telegram_link', '')
-    shorten_linked = shorten_link(data_link)
-    link = UPDATE_DATA().update_link(shorten_linked)
+    # shorten_linked = shorten_link(data_link)
+    link = UPDATE_DATA().update_link(data_link)
 
     if not media_files or media_files[0].filename == '':
         flash('Vui lòng chọn file!', 'warning')
