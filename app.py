@@ -189,7 +189,7 @@ def upload(channel_id):
 
     # Thêm caption vào media đầu tiên
     if caption and media_group:
-        media_group[0]['caption'] = f'{caption}\n\nhttps://affiliate-telegram.vercel.app/{link}'
+        media_group[0]['caption'] = f'{caption}\n\nhttps://honghotlink.vercel.app/{link}'
 
 
     # Gửi media group lên Telegram
